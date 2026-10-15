@@ -366,7 +366,13 @@ Valider chaque étape dans VICE puis sur la vraie machine. Faire un `/clear` ent
 - **Oracle** : `outils/generer_perft.py` et `outils/generer_ia.py` (python-chess) produisent les
   positions de test et les valeurs attendues ; ils vérifient aussi que les coups attendus sont
   légaux.
-- Production du `.tap` pour le Tapuino et du `.d64` : même méthode que le jeu de dames.
+- **Images de disquette et de cassette** : `python3 outils/faire_images.py` produit `echecs.d64`
+  (par `c1541`) et `echecs.tap`, puis charge les deux dans VICE pour vérifier qu'elles lancent le
+  jeu. Le `.tap` est écrit par le script, VICE n'ayant pas d'outil pour en créer : ce n'est pas un
+  fichier mais l'enregistrement des impulsions d'une bande. Deux points coûtent cher à retrouver :
+  le **type de fichier doit être 1** (programme BASIC) — avec le type 3, un `LOAD` simple cherche
+  dans le vide — et les durées d'impulsion du PET sont **352, 512 et 680 cycles** (44, 64 et 85 en
+  unités TAP), pas celles du C64.
 - Les fichiers générés se refont par `python3 outils/generer_pieces.py`,
   `generer_tables.py` (dessins et géométrie), `generer_eval.py` (tables de position),
   `generer_perft.py` et `generer_ia.py` (positions de test).

@@ -78,6 +78,17 @@ machine réelle.
 | `?` | aide |
 | `Q` | quitter |
 
+## Installation
+
+Les binaires sont attachés à la [dernière release](../../releases/latest).
+
+- **Disquette** : `echecs.d64`, à écrire sur une disquette 1541/4040, puis
+  `LOAD"ECHECS",8` et `RUN`.
+- **Cassette** (par exemple avec un **Tapuino**) : `echecs.tap`, puis `LOAD`
+  et `RUN`.
+- **Fichier seul** : `echecs.prg`, qui se charge à l'adresse `$0401` et démarre
+  par `RUN`.
+
 ## Construire et lancer
 
 ```
@@ -107,6 +118,18 @@ l'affichage :
 64tass --cbm-prg -o perft.prg perft.asm
 64tass --cbm-prg -o test_ia.prg test_ia.asm
 ```
+
+Les images de disquette et de cassette se fabriquent à partir du `.prg` :
+
+```sh
+python3 outils/faire_images.py       # -> echecs.d64 et echecs.tap
+```
+
+Le `.d64` est confié à `c1541`, livré avec VICE. Le `.tap`, lui, est écrit par
+le script : VICE ne fournit pas d'outil pour en créer, et ce n'est pas un
+fichier mais l'enregistrement des impulsions d'une bande. Les deux images sont
+ensuite chargées dans VICE pour vérifier qu'elles lancent bien le jeu — une
+bande mal encodée ne se voit pas autrement.
 
 ## Tester
 
