@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------
+#  Fichiers produits par la compilation
+# ---------------------------------------------------------------------
+*.lst
+*.lbl
+*.map
+
+# ---------------------------------------------------------------------
+#  Sorties de test et fichiers temporaires
+# ---------------------------------------------------------------------
+*.png
+!images/*.png
+*.log
+__pycache__/
+*.pyc
+*~
+
+# ---------------------------------------------------------------------
+#  ROMs Commodore : ne JAMAIS les publier
+#
+#  Les ROMs du PET (KERNAL, BASIC, editeur, generateur de caracteres)
+#  sont sous droits d'auteur et ne font pas partie de ce projet. Il faut
+#  se les procurer soi-meme, le README explique ou. Cela vaut aussi pour
+#  les EPROM francaises et les images cassette qui en contiennent.
+# ---------------------------------------------------------------------
+*.bin
+*.rom
+characters*
+chargen*
+kernal*
+basic*
+edit-4*
+
+# ---------------------------------------------------------------------
+#  Binaires du jeu : distribues par les releases, pas dans le depot
+# ---------------------------------------------------------------------
+echecs.prg
+
+# Toutes les images cassette et disquette, pas seulement celles que
+# produit le build : elles sont lourdes, se refabriquent, et certaines
+# embarquent des ROMs.
+*.tap
+*.d64
+
+# Instantanes VICE : ils contiennent toute la memoire de la machine
+# emulee, ROMs comprises. A ne jamais publier.
+*.vsf
+
+# Programmes de validation : ils se reassemblent en une seconde
+perft.prg
+test_ia.prg

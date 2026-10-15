@@ -1,0 +1,73 @@
+[
+  {
+    "nom": "mat du couloir",
+    "fen": "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+    "niveau": 2,
+    "coups": [
+      "a1-a8"
+    ],
+    "pourquoi": "la tour mate au fond ; tout autre coup laisse gagner"
+  },
+  {
+    "nom": "mat en un de la dame",
+    "fen": "6k1/5ppp/8/8/8/8/5PPP/3Q2K1 w - - 0 1",
+    "niveau": 2,
+    "coups": [
+      "d1-d8"
+    ],
+    "pourquoi": "meme idee avec la dame"
+  },
+  {
+    "nom": "reprendre la dame",
+    "fen": "4k3/8/8/3q4/3Q4/8/8/4K3 w - - 0 1",
+    "niveau": 2,
+    "coups": [
+      "d4-d5"
+    ],
+    "pourquoi": "les dames se regardent : il faut prendre"
+  },
+  {
+    "nom": "sauver la dame",
+    "fen": "4k3/8/8/8/3q4/8/3R4/4K3 b - - 0 1",
+    "niveau": 3,
+    "coups": [
+      "d4-h8",
+      "d4-g7",
+      "d4-a7",
+      "d4-f6",
+      "d4-b6",
+      "d4-e5",
+      "d4-c5",
+      "d4-h4",
+      "d4-g4",
+      "d4-f4",
+      "d4-e4",
+      "d4-c4",
+      "d4-b4",
+      "d4-a4",
+      "d4-e3",
+      "d4-c3",
+      "d4-g1",
+      "d4-a1"
+    ],
+    "pourquoi": "la dame est attaquee par la tour : elle prend ou se met a l'abri"
+  },
+  {
+    "nom": "gagner un pion franc",
+    "fen": "7k/8/8/3p4/4P3/8/8/K7 w - - 0 1",
+    "niveau": 3,
+    "coups": [
+      "e4-d5"
+    ],
+    "pourquoi": "le pion d5 est libre et le roi noir trop loin"
+  },
+  {
+    "nom": "promouvoir tout de suite",
+    "fen": "8/4P3/5k2/8/8/8/8/4K3 w - - 0 1",
+    "niveau": 3,
+    "coups": [
+      "e7-e8"
+    ],
+    "pourquoi": "attendre laisse le roi noir revenir en e7"
+  }
+]
