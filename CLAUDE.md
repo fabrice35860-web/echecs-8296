@@ -410,6 +410,46 @@ inclure de ROM Commodore. Fichiers `.prg`, `.d64`, `.tap` en pièces jointes de 
   2. n'appeler `est_attaquee` après un coup que lorsque le roi peut réellement être en prise ;
   3. tenir le score matériel à jour au lieu de le recalculer à chaque feuille ;
   4. coups « killer » et table de transpositions, qui réduisent l'arbre plutôt que le coût du nœud.
+
+  Mesures faites au niveau 6 sur les six positions de `test_ia.prg`, qui donnent une idée du coût
+  selon la position : mat du couloir 144 nœuds (profondeur 2, la recherche s'arrête dès qu'un mat
+  est vu), mat de la dame 229 (p. 2), reprise de dame 16 894 (p. 5), dame à sauver 19 467 (p. 4),
+  pion franc 20 630 (p. 8), promotion 19 608 (p. 6). Une position pauvre coûte moins cher par
+  nœud, d'où la profondeur bien plus grande en finale.
+
+- **Force estimée : 1000 à 1200 Elo** — *estimation, pas mesure*. Elle découle de la profondeur
+  atteinte (3 demi-coups plus la recherche de calme en milieu de partie), pas d'un match.
+
+  Ce que la profondeur 3 permet et interdit : le programme ne laisse jamais une pièce en prise et
+  ne perd pas d'échange, la recherche de calme l'en préserve ; il punit les gaffes simples et
+  trouve les mats en un, souvent en deux ; mais **toute combinaison de trois coups le dépasse** —
+  sacrifice suivi d'une fourchette, attaque à la découverte préparée, attraction. Il n'a aucun
+  plan : son jugement positionnel se réduit aux tables de cases, aux pions doublés et isolés, et
+  au roi qui se cache ou sort selon la phase. En finale il est relativement meilleur, la
+  profondeur y étant deux fois plus grande, mais sans aucune connaissance de finale (opposition,
+  règle du carré) hors ce que la recherche trouve d'elle-même.
+
+  Repères historiques, en ordres de grandeur (les échelles de l'époque sont surtout USCF et les
+  estimations varient d'une source à l'autre) :
+
+  | Programme | Machine | Force estimée |
+  |---|---|---|
+  | Microchess (1976) | 6502, 1 Ko | 800–1000 |
+  | Chess Challenger 7 (1979) | dédié | ~1100 |
+  | **Ce programme** | **6502 à 1 MHz** | **1000–1200** |
+  | Sargon II (1978-79) | Z80, puis 6502 sur Apple II | 1400–1500 |
+
+  La comparaison qui compte est **Sargon II sur Apple II** : même processeur, même fréquence. Il
+  était plus fort, et pour des raisons qu'on peut nommer — code de recherche plus économe,
+  évaluation plus riche (mobilité, sécurité du roi), extensions tactiques. Nos 36 000 cycles par
+  nœud sont le principal frein : c'est là que se gagneraient les points, pas dans l'évaluation.
+
+  **Pour obtenir un vrai chiffre**, il faudrait un match contre un moteur calibré. Les briques
+  existent : `outils/lire_ecran.py` sait lire le coup joué dans le panneau, `-keybuf` sait injecter
+  les coups en notation, et python-chess peut arbitrer contre un adversaire bridé (Stockfish à
+  faible `Skill Level`, ou fairymax). Reste à écrire le pont VICE ↔ UCI. Compter environ 2,5 s
+  réelles par coup au niveau 6 en warp, donc ~2 min par partie et 4 à 5 heures pour une centaine
+  de parties, ce qui donnerait un Elo à ±50 près.
 - Un vrai écran de menu (celui du jeu de dames) reste à porter ; pour l'instant `M` ramène
   directement au choix du jeu de caractères, et `L` change le niveau en cours de partie.
 - Le joueur choisit-il sa couleur (Blancs/Noirs) et l'orientation de l'échiquier ?
