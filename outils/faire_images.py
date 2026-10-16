@@ -56,13 +56,29 @@ NOM_CBM = "ECHECS"
 # Durees d'impulsion, en unites TAP de huit cycles
 COURT, MOYEN, LONG = 44, 64, 85
 
-# Silences d'amorce, en nombre d'impulsions courtes. Les valeurs sont
-# celles d'une image qui charge sur cette machine : une longue amorce
-# devant chaque bloc, le temps que le moteur prenne sa vitesse, et un
-# court intervalle entre les deux copies d'un meme bloc.
+# Amorces, en nombre d'impulsions courtes. Une longue amorce devant
+# chaque fichier, le temps que le moteur prenne sa vitesse, un court
+# intervalle entre les deux copies d'un meme bloc, et surtout une amorce
+# de queue derriere la derniere copie.
+#
+# Cette amorce de queue n'est pas un ornement. Sans elle, la bande
+# s'arretait net sur le marqueur de fin du dernier bloc : VICE signale
+# alors la fin de bande et son KERNAL conclut, mais une vraie 8296
+# attend des fronts qui ne viennent plus, et le chargement n'aboutit
+# pas. C'est le defaut qui rendait les images precedentes illisibles sur
+# la machine reelle alors qu'elles passaient en emulation.
 AMORCE_DEBUT = 0x6A00       # avant l'en-tete
 AMORCE_DONNEES = 0x1500     # avant les donnees
 AMORCE_COPIE = 80           # entre les deux copies d'un bloc
+AMORCE_QUEUE = 80           # derriere la seconde copie
+
+# Silences, en cycles. Celui de tete est le temps mort avant le premier
+# bloc ; celui du milieu est l'arret du moteur entre l'en-tete et les
+# donnees, que le KERNAL commande lui-meme. Les deux valeurs sont celles
+# relevees sur un enregistrement fait par VICE sur une bande montee a la
+# main (0,34 s), arrondies.
+PAUSE_TETE = 340000
+PAUSE_MILIEU = 340000
 
 # Type 1 : programme BASIC, ce que cherche un LOAD sans parametre. Le
 # type 3, qui impose l'adresse de chargement, demanderait LOAD"nom",1,1
@@ -114,6 +130,41 @@ def entete(nom, debut, fin):
     return h
 
 
+def fichier_tape(donnees, amorce):
+    """Un fichier sur la bande : deux copies du bloc, amorce de queue.
+
+    C'est la forme qu'ecrit le KERNAL : une longue amorce, la copie dite
+    premiere, un court intervalle, la seconde copie, puis une amorce de
+    queue pour que le lecteur ait de quoi finir son travail.
+    """
+    return (bloc(donnees, True, amorce)
+            + bloc(donnees, False, AMORCE_COPIE)
+            + [COURT] * AMORCE_QUEUE)
+
+
+def ecrire_tap(chemin, elements):
+    """Serialise une suite d'impulsions et de silences au format TAP v1.
+
+    Une impulsion est un entier, un silence le couple ("pause", cycles).
+    En version 1, un silence s'ecrit 0 suivi de sa duree sur trois octets
+    de poids croissant. Le mot de l'en-tete compte des OCTETS de donnees,
+    pas des impulsions : un silence en vaut quatre.
+    """
+    corps = bytearray()
+    for e in elements:
+        if isinstance(e, tuple):
+            corps.append(0)
+            corps += int(e[1]).to_bytes(3, "little")
+        else:
+            corps.append(e)
+    with open(chemin, "wb") as f:
+        f.write(b"C64-TAPE-RAW")
+        f.write(bytes([1, 0, 0, 0]))            # version 1
+        f.write(len(corps).to_bytes(4, "little"))
+        f.write(bytes(corps))
+    return sum(1 for e in elements if not isinstance(e, tuple))
+
+
 def faire_tap(prg, chemin, nom):
     donnees = open(prg, "rb").read()
     debut = donnees[0] | (donnees[1] << 8)      # les deux premiers octets
@@ -121,18 +172,162 @@ def faire_tap(prg, chemin, nom):
     fin = debut + len(corps)
 
     tete = entete(nom, debut, fin)
-    impulsions = []
-    impulsions += bloc(tete, True, AMORCE_DEBUT)
-    impulsions += bloc(tete, False, AMORCE_COPIE)
-    impulsions += bloc(corps, True, AMORCE_DONNEES)
-    impulsions += bloc(corps, False, AMORCE_COPIE)
+    elements = [("pause", PAUSE_TETE)]
+    elements += fichier_tape(tete, AMORCE_DEBUT)
+    elements += [("pause", PAUSE_MILIEU)]       # le KERNAL arrete le moteur
+    elements += fichier_tape(corps, AMORCE_DONNEES)
 
-    with open(chemin, "wb") as f:
-        f.write(b"C64-TAPE-RAW")
-        f.write(bytes([1, 0, 0, 0]))            # version 1
-        f.write(len(impulsions).to_bytes(4, "little"))
-        f.write(bytes(impulsions))
-    return debut, fin, len(impulsions)
+    n = ecrire_tap(chemin, elements)
+    return debut, fin, n
+
+
+# ---------------------------------------------------------------------
+#  Relecture de la bande produite
+#
+#  VICE ne sait pas juger une bande : son emulation du lecteur pardonne
+#  ce qu'un vrai 8296 refuse -- la fin de bande lui tient lieu de fin de
+#  bloc. Le seul controle qui attrape ce genre de defaut est de relire
+#  les impulsions ecrites et d'y retrouver la forme attendue.
+# ---------------------------------------------------------------------
+def lire_tap(chemin):
+    """Rend la suite des elements d'un .tap : impulsions et silences."""
+    d = open(chemin, "rb").read()
+    if d[:12] != b"C64-TAPE-RAW":
+        return None, "signature absente"
+    annonce = int.from_bytes(d[16:20], "little")
+    if annonce != len(d) - 20:
+        return None, ("le mot de longueur annonce %d octets, le fichier en "
+                      "porte %d" % (annonce, len(d) - 20))
+    elements, i = [], 20
+    while i < len(d):
+        if d[i] == 0 and d[12] >= 1:
+            elements.append(("pause", int.from_bytes(d[i+1:i+4], "little")))
+            i += 4
+        else:
+            elements.append(d[i])
+            i += 1
+    return elements, None
+
+
+def classer(v):
+    """Une impulsion rendue a sa classe : courte, moyenne, longue."""
+    if v <= (COURT + MOYEN) // 2:
+        return "C"
+    if v <= (MOYEN + LONG) // 2:
+        return "M"
+    return "L"
+
+
+def decouper_tap(elements):
+    """Decoupe en amorces (suites d'impulsions courtes), blocs, silences."""
+    zones, i = [], 0
+    while i < len(elements):
+        e = elements[i]
+        if isinstance(e, tuple):
+            zones.append(("pause", e[1])); i += 1; continue
+        j = i
+        while (j < len(elements) and not isinstance(elements[j], tuple)
+               and classer(elements[j]) == "C"):
+            j += 1
+        if j - i >= 16:
+            zones.append(("amorce", j - i)); i = j; continue
+        j = i
+        while j < len(elements) and not isinstance(elements[j], tuple):
+            if classer(elements[j]) == "C":
+                k = j
+                while (k < len(elements) and not isinstance(elements[k], tuple)
+                       and classer(elements[k]) == "C"):
+                    k += 1
+                if k - j >= 16:
+                    break
+                j = k
+                continue
+            j += 1
+        zones.append(("bloc", elements[i:j])); i = j
+    return zones
+
+
+def decoder_bloc(impulsions):
+    """Les octets d'un bloc : marqueur L+M, huit bits, parite."""
+    cl = [classer(v) for v in impulsions]
+    octets, i = [], 0
+    while i < len(cl) - 1:
+        if cl[i] == "L" and cl[i+1] == "M":
+            i += 2
+            v, ok = 0, True
+            for b in range(9):
+                if i + 1 >= len(cl):
+                    ok = False
+                    break
+                paire = (cl[i], cl[i+1])
+                if paire == ("M", "C"):
+                    n = 1
+                elif paire == ("C", "M"):
+                    n = 0
+                else:
+                    ok = False
+                    break
+                if b < 8:
+                    v |= n << b
+                i += 2
+            if ok:
+                octets.append(v)
+        elif cl[i] == "L" and cl[i+1] == "C":
+            i += 2                      # marqueur de fin de bloc
+        else:
+            i += 1
+    return octets
+
+
+def verifier_tap(chemin, prg, nom):
+    """Relit la bande et dit ce qui ne va pas, ou None si tout va bien."""
+    elements, souci = lire_tap(chemin)
+    if souci:
+        return souci
+    zones = decouper_tap(elements)
+    formes = [z[0] for z in zones]
+    attendu = ["pause", "amorce", "bloc", "amorce", "bloc", "amorce",
+               "pause", "amorce", "bloc", "amorce", "bloc", "amorce"]
+    if formes != attendu:
+        return "structure inattendue : %s" % " ".join(formes)
+    # l'amorce de queue : celle qui suit la derniere copie de chaque fichier
+    for rang in (5, 11):
+        if zones[rang][1] < 20:
+            return ("amorce de queue trop courte (%d impulsions) : une vraie "
+                    "machine n'y trouverait pas de quoi finir le bloc"
+                    % zones[rang][1])
+    blocs = [decoder_bloc(z[1]) for z in zones if z[0] == "bloc"]
+    for rang, b in enumerate(blocs):
+        if len(b) < 11:
+            return "bloc %d trop court : %d octets" % (rang + 1, len(b))
+        contenu, controle = b[9:-1], b[-1]
+        calcule = 0
+        for v in contenu:
+            calcule ^= v
+        if calcule != controle:
+            return ("controle du bloc %d faux : %02X au lieu de %02X"
+                    % (rang + 1, controle, calcule))
+        depart = b[0] & 0x0F
+        if depart != 9:
+            return "compte a rebours du bloc %d : %d au lieu de 9" % (rang + 1,
+                                                                      depart)
+    if blocs[0][9:-1] != blocs[1][9:-1] or blocs[2][9:-1] != blocs[3][9:-1]:
+        return "les deux copies d'un bloc ne portent pas la meme chose"
+    tete = blocs[0][9:-1]
+    donnees = open(prg, "rb").read()
+    debut = donnees[0] | (donnees[1] << 8)
+    fin = debut + len(donnees) - 2
+    if tete[0] != TYPE_PRG:
+        return "type de fichier %d au lieu de %d" % (tete[0], TYPE_PRG)
+    if (tete[1] | tete[2] << 8) != debut or (tete[3] | tete[4] << 8) != fin:
+        return ("l'en-tete annonce $%04X-$%04X au lieu de $%04X-$%04X"
+                % (tete[1] | tete[2] << 8, tete[3] | tete[4] << 8, debut, fin))
+    ecrit = bytes(tete[5:21]).decode("latin1").rstrip(" ")
+    if ecrit != nom:
+        return "nom de fichier %r au lieu de %r" % (ecrit, nom)
+    if bytes(blocs[2][9:-1]) != donnees[2:]:
+        return "les donnees de la bande ne sont pas celles du .prg"
+    return None
 
 
 def faire_d64(prg, chemin, nom):
@@ -196,6 +391,12 @@ def main():
     debut, fin, n = faire_tap(PRG, TAP, NOM_CBM)
     print("%-14s %7d octets  (%d impulsions, $%04X-$%04X)"
           % (os.path.basename(TAP), os.path.getsize(TAP), n, debut, fin))
+    souci = verifier_tap(TAP, PRG, NOM_CBM)
+    if souci:
+        print("ECHEC  %-14s %s" % (os.path.basename(TAP), souci))
+        return 1
+    print("ok     %-14s relue : structure et donnees conformes"
+          % os.path.basename(TAP))
     if "--sans-essai" in sys.argv:
         return 0
     echecs = 0

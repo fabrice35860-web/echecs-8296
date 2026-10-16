@@ -138,9 +138,15 @@ fichiers de `dist/` sortent donc toujours du même assemblage.
 
 Le `.d64` est confié à `c1541`, livré avec VICE. Le `.tap`, lui, est écrit par
 le script : VICE ne fournit pas d'outil pour en créer, et ce n'est pas un
-fichier mais l'enregistrement des impulsions d'une bande. Les deux images sont
-ensuite chargées dans VICE pour vérifier qu'elles lancent bien le jeu — une
-bande mal encodée ne se voit pas autrement.
+fichier mais l'enregistrement des impulsions d'une bande.
+
+Le script relit ensuite le `.tap` qu'il vient d'écrire — structure, sommes de
+contrôle, en-tête, données — puis charge les deux images dans VICE pour vérifier
+qu'elles lancent le jeu. Les deux contrôles sont nécessaires : **l'émulateur ne
+sait pas juger une bande**, son lecteur pardonnant ce qu'une vraie machine
+refuse. Il faut notamment une amorce de queue derrière la seconde copie de
+chaque bloc, faute de quoi la bande s'arrête net sur le marqueur de fin et le
+8296 attend des fronts qui ne viennent plus.
 
 ## Tester
 

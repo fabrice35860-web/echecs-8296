@@ -373,13 +373,30 @@ Valider chaque étape dans VICE puis sur la vraie machine. Faire un `/clear` ent
 - **Oracle** : `outils/generer_perft.py` et `outils/generer_ia.py` (python-chess) produisent les
   positions de test et les valeurs attendues ; ils vérifient aussi que les coups attendus sont
   légaux.
-- **Images de disquette et de cassette** : `python3 outils/faire_images.py` produit `echecs.d64`
-  (par `c1541`) et `echecs.tap`, puis charge les deux dans VICE pour vérifier qu'elles lancent le
-  jeu. Le `.tap` est écrit par le script, VICE n'ayant pas d'outil pour en créer : ce n'est pas un
-  fichier mais l'enregistrement des impulsions d'une bande. Deux points coûtent cher à retrouver :
-  le **type de fichier doit être 1** (programme BASIC) — avec le type 3, un `LOAD` simple cherche
-  dans le vide — et les durées d'impulsion du PET sont **352, 512 et 680 cycles** (44, 64 et 85 en
-  unités TAP), pas celles du C64.
+- **Images de disquette et de cassette** : `python3 outils/faire_images.py` produit `dist/`, puis
+  relit le `.tap` qu'il vient d'écrire et charge les deux images dans VICE. Le `.tap` est écrit par
+  le script, VICE n'ayant pas d'outil pour en créer : ce n'est pas un fichier mais l'enregistrement
+  des impulsions d'une bande. Trois points coûtent cher à retrouver :
+  1. le **type de fichier doit être 1** (programme BASIC) — avec le type 3, un `LOAD` simple
+     cherche dans le vide ;
+  2. les durées d'impulsion du PET sont **352, 512 et 680 cycles** (44, 64 et 85 en unités TAP),
+     pas celles du C64 ;
+  3. il faut une **amorce de queue** (80 impulsions courtes) derrière la seconde copie de chaque
+     bloc, un **silence de tête** et un **silence entre l'en-tête et les données** (0,34 s, l'arrêt
+     du moteur). Sans l'amorce de queue, la bande s'arrête net sur le marqueur de fin : VICE
+     signale la fin de bande et conclut, **mais la vraie 8296 attend des fronts qui ne viennent
+     plus et le chargement n'aboutit pas**. C'est le défaut des images v1.0 et v1.1.
+
+  **VICE ne peut donc pas juger une bande** : son émulation du lecteur pardonne ce que la machine
+  refuse. D'où `verifier_tap` dans `faire_images.py`, qui relit les impulsions écrites, y retrouve
+  la forme attendue (silence, amorce, bloc, amorce, bloc, amorce de queue — deux fois), contrôle
+  les sommes de chaque bloc, l'en-tête et le fait que les données soient bien celles du `.prg`. Il
+  valide la bande de référence enregistrée par VICE et rejette les anciennes.
+
+  **Méthode de référence**, si un doute revient : dans VICE, monter une bande par *create and
+  attach dataset image*, taper `SAVE`, presser *Record*, puis *Stop* et *detach* — la bande ainsi
+  obtenue est celle que le KERNAL écrit lui-même, et sert de modèle à comparer (décodage par
+  `verifier_tap`, ou les scripts de comparaison de structure).
 - Les fichiers générés se refont par `python3 outils/generer_pieces.py`,
   `generer_tables.py` (dessins et géométrie), `generer_eval.py` (tables de position),
   `generer_perft.py` et `generer_ia.py` (positions de test).
