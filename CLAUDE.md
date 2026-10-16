@@ -381,8 +381,12 @@ Valider chaque étape dans VICE puis sur la vraie machine. Faire un `/clear` ent
 
 ## Publication
 
-Dépôt GitHub `fabrice35860-web/echecs-8296` (à créer), licence comme le jeu de dames. Ne jamais
-inclure de ROM Commodore. Fichiers `.prg`, `.d64`, `.tap` en pièces jointes de release.
+Dépôt GitHub `fabrice35860-web/echecs-8296`, licence comme le jeu de dames. Ne jamais inclure de
+ROM Commodore. Les trois fichiers `.prg`, `.d64`, `.tap` sont **suivis dans `dist/`**, pour être
+visibles dans l'arborescence du dépôt, et joints en plus à chaque release. `outils/faire_images.py`
+remplit `dist/` entièrement : il y recopie le `.prg` et y écrit les deux images, de sorte que les
+trois sortent du même assemblage. `.gitignore` exclut ces noms partout ailleurs, avec trois
+contre-règles `!dist/...` à la fin.
 
 ## Questions ouvertes
 

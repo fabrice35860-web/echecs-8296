@@ -24,6 +24,7 @@ import tempfile
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RACINE, "outils"))
 from lire_ecran import lire_grille, symbole          # noqa: E402
+from vice import ROMS_STANDARD                       # noqa: E402
 
 PRG = os.path.join(RACINE, "echecs.prg")
 CYCLES = "30000000"
@@ -288,7 +289,7 @@ SCENARIOS = [
 
 
 def jouer(touches, image, cycles=CYCLES):
-    cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+    cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
            "-limitcycles", cycles, "-exitscreenshot", image, "-warp", "+sound"]
     if touches:
         cmd += ["-keybuf", touches]
@@ -328,7 +329,7 @@ def test_curseur(dossier):
         image = os.path.join(dossier, "clign.png")
         if os.path.exists(image):
             os.remove(image)
-        cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+        cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
                "-limitcycles", str(cycles), "-exitscreenshot", image,
                "-warp", "+sound", "-keybuf", "\n"]
         subprocess.run(cmd, capture_output=True, timeout=300)
@@ -360,7 +361,7 @@ def test_selection(dossier):
     image = os.path.join(dossier, "select.png")
     if os.path.exists(image):
         os.remove(image)
-    cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+    cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
            "-limitcycles", CYCLES, "-exitscreenshot", image,
            "-warp", "+sound", "-keybuf", "\n 8"]
     subprocess.run(cmd, capture_output=True, timeout=300)
@@ -391,7 +392,7 @@ def test_destinations(dossier):
     image = os.path.join(dossier, "dest.png")
     if os.path.exists(image):
         os.remove(image)
-    cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+    cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
            "-limitcycles", CYCLES, "-exitscreenshot", image,
            "-warp", "+sound", "-keybuf", "\ng1\n"]
     subprocess.run(cmd, capture_output=True, timeout=300)
@@ -440,7 +441,7 @@ def test_pieces_edex(dossier):
     image = os.path.join(dossier, "edex.png")
     if os.path.exists(image):
         os.remove(image)
-    cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+    cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
            "-limitcycles", CYCLES, "-exitscreenshot", image,
            "-warp", "+sound", "-keybuf", "2\n"]
     subprocess.run(cmd, capture_output=True, timeout=300)

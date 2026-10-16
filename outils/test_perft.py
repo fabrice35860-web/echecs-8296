@@ -23,6 +23,7 @@ import tempfile
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RACINE, "outils"))
 from lire_ecran import lire_grille, symbole          # noqa: E402
+from vice import ROMS_STANDARD                       # noqa: E402
 
 PRG = os.path.join(RACINE, "perft.prg")
 ATTENDU = os.path.join(RACINE, "outils", "perft_attendu.json")
@@ -48,7 +49,7 @@ def main():
 
     with tempfile.TemporaryDirectory() as dossier:
         image = os.path.join(dossier, "perft.png")
-        cmd = ["xpet", "-model", "8296", "-autostart", PRG,
+        cmd = ["xpet", "-model", "8296"] + ROMS_STANDARD + [ "-autostart", PRG,
                "-limitcycles", str(cycles), "-exitscreenshot", image,
                "-warp", "+sound"]
         subprocess.run(cmd, capture_output=True, timeout=3600)

@@ -80,14 +80,21 @@ machine réelle.
 
 ## Installation
 
-Les binaires sont attachés à la [dernière release](../../releases/latest).
+Les trois fichiers prêts à l'emploi sont dans **[`dist/`](dist/)**, et attachés
+à la [dernière release](../../releases/latest).
 
-- **Disquette** : `echecs.d64`, à écrire sur une disquette 1541/4040, puis
-  `LOAD"ECHECS",8` et `RUN`.
-- **Cassette** (par exemple avec un **Tapuino**) : `echecs.tap`, puis `LOAD`
-  et `RUN`.
-- **Fichier seul** : `echecs.prg`, qui se charge à l'adresse `$0401` et démarre
-  par `RUN`.
+- **Disquette** : [`dist/echecs.d64`](dist/echecs.d64), à écrire sur une
+  disquette 1541/4040, puis `LOAD"ECHECS",8` et `RUN`.
+- **Cassette** (par exemple avec un **Tapuino**) :
+  [`dist/echecs.tap`](dist/echecs.tap), puis `LOAD`, PLAY, et `RUN` une fois
+  chargé. Comptez 4 min 20 s de bande.
+- **Fichier seul** : [`dist/echecs.prg`](dist/echecs.prg), qui se charge à
+  l'adresse `$0401` et démarre par `RUN`. Sous VICE :
+  `xpet -model 8296 -autostart dist/echecs.prg`.
+
+Pour télécharger un seul fichier depuis GitHub, passer par le bouton
+« Download raw file » de sa page, ou par la release : un clic sur le nom dans
+l'arborescence n'affiche qu'un aperçu.
 
 ## Construire et lancer
 
@@ -122,8 +129,12 @@ l'affichage :
 Les images de disquette et de cassette se fabriquent à partir du `.prg` :
 
 ```sh
-python3 outils/faire_images.py       # -> echecs.d64 et echecs.tap
+python3 outils/faire_images.py       # -> dist/
 ```
+
+Il recopie le `.prg` dans `dist/`, y écrit les deux images, et les charge
+ensuite dans VICE pour vérifier qu'elles lancent bien le jeu. Les trois
+fichiers de `dist/` sortent donc toujours du même assemblage.
 
 Le `.d64` est confié à `c1541`, livré avec VICE. Le `.tap`, lui, est écrit par
 le script : VICE ne fournit pas d'outil pour en créer, et ce n'est pas un

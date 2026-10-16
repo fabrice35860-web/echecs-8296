@@ -49,3 +49,13 @@ echecs.prg
 # Programmes de validation : ils se reassemblent en une seconde
 perft.prg
 test_ia.prg
+
+# ---------------------------------------------------------------------
+#  Exception : dist/ reunit les trois fichiers distribues et EST suivi.
+#  Ils sont ainsi visibles dans le depot, sans passer par une release.
+#  Les regles ci-dessus les auraient exclus (echecs.prg, *.d64, *.tap
+#  s'appliquent a tous les niveaux), d'ou ces trois contre-regles.
+# ---------------------------------------------------------------------
+!dist/echecs.prg
+!dist/echecs.d64
+!dist/echecs.tap

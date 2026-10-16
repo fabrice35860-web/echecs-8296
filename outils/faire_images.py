@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Fabrique les images disquette et cassette a partir de echecs.prg.
 
+Les trois fichiers distribues (.prg, .d64, .tap) sont reunis dans dist/.
+
     python3 outils/faire_images.py [--sans-essai]
 
 Produit echecs.d64 (par c1541, livre avec VICE) et echecs.tap, les deux
@@ -34,13 +36,21 @@ lancent bien le jeu : une bande mal encodee ne se voit pas autrement.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRG = os.path.join(RACINE, "echecs.prg")
-D64 = os.path.join(RACINE, "echecs.d64")
-TAP = os.path.join(RACINE, "echecs.tap")
+
+# Les trois fichiers distribues sont reunis dans dist/, qui est suivi par
+# git : c'est la que les utilisateurs les trouvent sans passer par une
+# release. Le .prg y est recopie depuis la sortie de 64tass, pour que les
+# trois soient toujours faits de la meme assise.
+DIST = os.path.join(RACINE, "dist")
+PRG_DIST = os.path.join(DIST, "echecs.prg")
+D64 = os.path.join(DIST, "echecs.d64")
+TAP = os.path.join(DIST, "echecs.tap")
 NOM_CBM = "ECHECS"
 
 # Durees d'impulsion, en unites TAP de huit cycles
@@ -148,13 +158,15 @@ def essayer(image):
     """
     sys.path.insert(0, os.path.join(RACINE, "outils"))
     from lire_ecran import lire_grille, symbole
+    from vice import ROMS_STANDARD
     import tempfile
     with tempfile.TemporaryDirectory() as dossier:
         capture = os.path.join(dossier, "essai.png")
         subprocess.run(
-            ["xpet", "-model", "8296", "-autostart", image,
-             "-limitcycles", "500000000", "-exitscreenshot", capture,
-             "-warp", "+sound"],
+            ["xpet", "-model", "8296"] + ROMS_STANDARD
+            + ["-autostart", image,
+               "-limitcycles", "500000000", "-exitscreenshot", capture,
+               "-warp", "+sound"],
             capture_output=True, timeout=1800)
         if not os.path.exists(capture):
             return "VICE n'a rien rendu"
@@ -171,6 +183,11 @@ def main():
         print("echecs.prg absent : lancer d'abord "
               "64tass --cbm-prg -o echecs.prg main.asm")
         return 1
+    if not os.path.isdir(DIST):
+        os.mkdir(DIST)
+    shutil.copyfile(PRG, PRG_DIST)
+    print("%-14s %7d octets" % (os.path.basename(PRG_DIST),
+                                os.path.getsize(PRG_DIST)))
     if not faire_d64(PRG, D64, NOM_CBM):
         print("c1541 a echoue")
         return 1
