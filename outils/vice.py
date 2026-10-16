@@ -32,10 +32,15 @@ EDITEUR = os.environ.get("PET_EDITOR_NOM", "edit-4-80-b-50Hz.901474-04_.bin")
 # en sortant -- il y enregistrerait les ROMs standard forcees ici, donc
 # effacerait les EPROM EDEX que le proprietaire y avait reglees. Une
 # suite de test ne doit rien laisser derriere elle.
+#
+# Le delai du tampon clavier est epingle pour la meme raison : les
+# scenarios de test l'ont valide a 400, et il ne doit pas dependre de ce
+# qui traine dans le vicerc de la machine.
 ROMS_STANDARD = [
     "-chargen", CHARGEN,
     "-editor", EDITEUR,
     "-romA", "",
+    "-keybuf-delay", "400",
     "+saveres",
 ]
 

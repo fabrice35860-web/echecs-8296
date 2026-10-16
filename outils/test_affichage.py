@@ -35,12 +35,16 @@ CYCLES = "30000000"
 # bonne part.
 CYCLES_SPECIAUX = {
     "l'ordinateur repond au premier coup": "60000000",
+    "annulation rend la main au joueur": "60000000",
 }
 
 # Le curseur part de E2. Rappel du pave : 8 monte, 2 descend, 4 et 6 vont
 # a gauche et a droite, 7 9 1 3 sont les diagonales.
 #
 # Un scenario : (nom, touches, [(ligne, texte attendu), ...])
+# La ligne None cherche le texte n'importe ou sur l'ecran. Un texte
+# attendu prefixe de "!" doit au contraire etre absent de la ligne : il
+# faut bien pouvoir exiger qu'un coup annule ne figure plus au tableau.
 SCENARIOS = [
     ("ecran de choix de la ROM", "", [
         (0, "JEU D'ECHECS"),
@@ -232,12 +236,23 @@ SCENARIOS = [
     ("annulation d'un coup", "\ne2-e4\nu", [
         (20, "COUP ANNULE"),
         (2, "TRAIT  : BLANCS"),
+        (8, "!E2-E4"),
+    ]),
+    # Contre l'ordinateur, defaire un seul demi-coup lui rendrait la main
+    # et il rejouerait aussitot : U doit remonter jusqu'au joueur, les
+    # deux demi-coups effaces, pour qu'il puisse choisir autre chose.
+    ("annulation rend la main au joueur", "\nl1je2-e4\nu", [
+        (2, "TRAIT  : BLANCS"),
+        (3, "ORDI   : NOIRS"),
+        (20, "COUP ANNULE"),
+        (8, "!E2-E4"),
+        (23, "CURSEUR : E2"),
     ]),
     # --- commandes ----------------------------------------------------
     ("ecran d'aide", "\n?", [
         (0, "AIDE - LES TOUCHES DU JEU"),
         (4, "FLECHES / PAVE 8 2 4 6   DEPLACER LE CURSEUR"),
-        (12, "ANNULER LE DERNIER COUP"),
+        (12, "ANNULER SON COUP ET LA REPONSE"),
         (22, "UNE TOUCHE POUR REVENIR A LA PARTIE"),
     ]),
     ("l'aide rend l'echiquier", "\n? ", [
@@ -510,13 +525,22 @@ def main():
                     tout = "\n".join(texte_ligne(grille, i) for i in range(25))
                     if attendu not in tout:
                         manques.append(("*", attendu, tout.replace("\n", " | ")[:70]))
+                elif attendu.startswith("!"):
+                    if attendu[1:] in texte_ligne(grille, ligne):
+                        manques.append((ligne, attendu,
+                                        texte_ligne(grille, ligne)))
                 elif attendu not in texte_ligne(grille, ligne):
                     manques.append((ligne, attendu, texte_ligne(grille, ligne)))
             if manques:
                 echecs += 1
                 print("ECHEC  %s" % nom)
                 for ligne, attendu, obtenu in manques:
-                    print("       ligne %-2s attendu : %r" % (ligne, attendu))
+                    if isinstance(attendu, str) and attendu.startswith("!"):
+                        print("       ligne %-2s interdit : %r"
+                              % (ligne, attendu[1:]))
+                    else:
+                        print("       ligne %-2s attendu : %r"
+                              % (ligne, attendu))
                     print("                obtenu  : %r" % obtenu)
             else:
                 print("ok     %s" % nom)

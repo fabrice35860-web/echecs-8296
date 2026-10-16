@@ -409,7 +409,7 @@ t_aide5         .text "                         PAR EXEMPLE E2-E4"
                 .byte 0
 t_aide6         .text "DEL                      EFFACER LA SAISIE"
                 .byte 0
-t_aide7         .text "U                        ANNULER LE DERNIER COUP"
+t_aide7         .text "U                        ANNULER SON COUP ET LA REPONSE"
                 .byte 0
 t_aide8         .text "L                        CHANGER DE NIVEAU"
                 .byte 0

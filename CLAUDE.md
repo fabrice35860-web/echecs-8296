@@ -236,6 +236,13 @@ Damier `▒` : code 102.
 - **U = annuler** (retour en arrière) : annule le dernier coup du joueur **et** la réponse de
   l'ordinateur (on revient à la position où c'était au joueur de jouer). Répétable jusqu'au début de
   la partie. Historique d'au moins 300 demi-coups.
+  Un seul demi-coup défait ne suffit pas : la main reviendrait à l'ordinateur, qui rejouerait
+  aussitôt le coup qu'on vient d'effacer — `U` paraissait alors sans effet. `tt_annuler` remonte
+  donc d'un demi-coup de plus tant que `trait` est le camp de l'ordinateur, sauf s'il ne reste
+  rien à défaire (l'ordinateur tient les Blancs et c'est son premier coup : le joueur n'a aucun
+  coup à reprendre, l'ordinateur rejoue). Avec `camp_ordi = ORDI_AUCUN`, un demi-coup suffit.
+  Vérifié par le scénario « annulation rend la main au joueur » de `test_affichage.py`, qui
+  échoue bien sur l'ancien code.
 - **N** = nouvelle partie (avec confirmation). **Q** = quitter (avec confirmation).
 - **?** = aide (écran listant les touches).
 - **L** = changer de niveau (entre deux coups).

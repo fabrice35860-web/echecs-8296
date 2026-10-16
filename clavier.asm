@@ -367,18 +367,26 @@ tt_commandes
         cmp #$54            ; T : tour
         beq tt_vers_taper
         ; --- commandes ---
+        ; Chacune passe par un saut long : les traitements qui suivent ont
+        ; grossi au point qu'un branchement court ne porte plus assez loin.
         cmp #TOUCHE_U
-        beq tt_annuler
-        cmp #TOUCHE_N
-        beq tt_nouvelle
-        cmp #TOUCHE_Q
-        beq tt_quitter
-        cmp #TOUCHE_L
-        beq tt_niveau
-        cmp #TOUCHE_J
-        beq tt_ordi
-        cmp #TOUCHE_M
-        beq tt_menu
+        bne +
+        jmp tt_annuler
++       cmp #TOUCHE_N
+        bne +
+        jmp tt_nouvelle
++       cmp #TOUCHE_Q
+        bne +
+        jmp tt_quitter
++       cmp #TOUCHE_L
+        bne +
+        jmp tt_niveau
++       cmp #TOUCHE_J
+        bne +
+        jmp tt_ordi
++       cmp #TOUCHE_M
+        bne tt_autres
+        jmp tt_menu
 tt_autres
         ; --- reste les touches de deplacement du curseur ---
 tt_navigation
@@ -412,9 +420,22 @@ tt_promotion
 tt_ordi
         jmp changer_camp_ordi
 
+; U : revenir en arriere. Un seul demi-coup defait ne suffit pas quand
+; l'ordinateur tient un camp : la main lui reviendrait, et il rejouerait
+; aussitot le coup qu'on vient d'effacer. On remonte donc d'un demi-coup
+; de plus, de facon que le joueur retrouve vraiment le trait et puisse
+; choisir autre chose. S'il ne reste rien a defaire -- l'ordinateur tient
+; les Blancs et c'est son premier coup -- on s'arrete la.
 tt_annuler
         jsr annuler_coup
         bne tta_rien
+        lda camp_ordi
+        cmp #ORDI_AUCUN     ; deux joueurs humains : un demi-coup suffit
+        beq tta_fait
+        cmp trait           ; la main est-elle revenue a l'ordinateur ?
+        bne tta_fait
+        jsr annuler_coup
+tta_fait
         lda #<t_m_annule
         ldx #>t_m_annule
         jsr message

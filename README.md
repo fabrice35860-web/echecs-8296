@@ -69,7 +69,7 @@ machine réelle.
 | RETURN, ESPACE | choisir une pièce, puis jouer |
 | lettre ou chiffre | saisie en notation (`E2-E4`, `CG1-F3`) |
 | DEL | effacer un caractère de la saisie |
-| `U` | annuler le dernier coup |
+| `U` | annuler son coup **et** la réponse de l'ordinateur, pour rejouer autrement |
 | `J` | camp tenu par l'ordinateur : aucun, les Noirs, les Blancs |
 | `L` | changer de niveau |
 | `STOP` | faire jouer l'ordinateur tout de suite |
